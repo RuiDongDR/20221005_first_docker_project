@@ -12,3 +12,43 @@
     rm -rf jnbinder-master*
     
     
+/bin/bash -ev SCRIPT:
+    ipyrmd --to ipynb --from Rmd -y -o analysis/index.ipynb analysis/index.Rmd
+    jupyter nbconvert --to notebook --execute analysis/index.ipynb --ExecutePreprocessor.timeout=360 
+    mv analysis/index.nbconvert.ipynb analysis/index.ipynb 
+    
+    
+/bin/bash SCRIPT:
+    jupyter nbconvert analysis/_index.ipynb --output /Users/serenadong/files_Rui/20221005_first_docker_project/docs/analysis.html --template docs/index.tpl 
+    # sed -i 's/<div class="prompt input_prompt">In&nbsp;\[[0-9]\]:<\/div>//g' docs/analysis.html
+    if [[ 0 -gt 0 ]]; then
+       perl -i -ne 'print if /\S/' docs/analysis.html
+    fi
+    
+    
+/bin/bash SCRIPT:
+    jupyter nbconvert /Users/serenadong/files_Rui/20221005_first_docker_project/analysis/Overview.ipynb --output /Users/serenadong/files_Rui/20221005_first_docker_project/docs/index.html --template docs/index.tpl 
+    # sed -i 's/<div class="prompt input_prompt">In&nbsp;\[[0-9]\]:<\/div>//g' docs/index.html
+    if [[ 0 -gt 0 ]]; then
+       perl -i -ne 'print if /\S/' docs/index.html
+    fi
+    
+    
+/bin/bash SCRIPT:
+    jupyter nbconvert analysis/Overview.ipynb --output /Users/serenadong/files_Rui/20221005_first_docker_project/docs/analysis/Overview.html --template docs/analysis.tpl 
+    num=`grep -n -Fx '''&copy Rui Dong, THU''' docs/analysis/Overview.html | tail -1 | sed 's/\([0-9]*\).*/\1/'`
+    perl -i -lpe 'print "<p><small>Exported from <a href=\"https:\/\/github.com\/RuiDongDR\/20221005_first_docker_project\/blob\/b5094ecdb2f5aa3f2c295812a55679bcc7a493e5\/analysis\/Overview.ipynb\"><code>analysis\/Overview.ipynb<\/code><\/a> committed by RuiDongDR on Fri Oct 7 10:35:09 2022 <a href=\"https:\/\/github.com\/RuiDongDR\/20221005_first_docker_project\/commit\/b5094ecdb2f5aa3f2c295812a55679bcc7a493e5\">revision 1, b5094ec<\/a> <a href=\"https:\/\/stephenslab.github.io\/ipynb-website\/notes.html#Note-about-commit-ids\"><span class=\"fa fa-question-circle\"><\/span><\/a><\/small><\/p>" if $. == '"$num"'+1' docs/analysis/Overview.html
+    if [[ 0 -gt 0 ]]; then
+       perl -i -ne 'print if /\S/' docs/analysis/Overview.html
+    fi
+    
+    
+/bin/bash SCRIPT:
+    jupyter nbconvert analysis/index.ipynb --output /Users/serenadong/files_Rui/20221005_first_docker_project/docs/analysis/index.html --template docs/analysis.tpl 
+    num=`grep -n -Fx '''&copy Rui Dong, THU''' docs/analysis/index.html | tail -1 | sed 's/\([0-9]*\).*/\1/'`
+    perl -i -lpe 'print "<p><small>Exported from <a href=\"https:\/\/github.com\/RuiDongDR\/20221005_first_docker_project\/blob\/b5094ecdb2f5aa3f2c295812a55679bcc7a493e5\/analysis\/index.Rmd\"><code>analysis\/index.Rmd<\/code><\/a> committed by RuiDongDR on Fri Oct 7 10:35:09 2022 <a href=\"https:\/\/github.com\/RuiDongDR\/20221005_first_docker_project\/commit\/b5094ecdb2f5aa3f2c295812a55679bcc7a493e5\">revision 1, b5094ec<\/a> <a href=\"https:\/\/stephenslab.github.io\/ipynb-website\/notes.html#Note-about-commit-ids\"><span class=\"fa fa-question-circle\"><\/span><\/a><\/small><\/p>" if $. == '"$num"'+1' docs/analysis/index.html
+    if [[ 0 -gt 0 ]]; then
+       perl -i -ne 'print if /\S/' docs/analysis/index.html
+    fi
+    
+    

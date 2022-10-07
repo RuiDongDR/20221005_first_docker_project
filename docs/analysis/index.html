@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="ipynb_website:version" content="0.9.7" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<link rel="stylesheet" type="text/css" href="../css/jt.css">
+
+<link rel="stylesheet" type="text/css" href="../css/toc2.css">
+
+<link href="../site_libs/jqueryui-1.11.4/jquery-ui.css">
+<link rel="stylesheet" href="../site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="../site_libs/font-awesome-4.5.0/css/font-awesome.min.css" rel="stylesheet" />
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js"></script>
+<script src="../site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="../site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="../site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+
+<link rel="stylesheet"
+      href="../site_libs/highlightjs/null.min.css"
+      type="text/css" />
+
+<script src="../site_libs/highlightjs/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script type="text/javascript">
+if (window.hljs && document.readyState && document.readyState === "complete") {
+   window.setTimeout(function() {
+      hljs.initHighlighting();
+   }, 0);
+}
+</script>
+
+<script src="../js/doc_toc.js"></script>
+<script src="../js/docs.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script>
+    MathJax.Hub.Config({
+        extensions: ["tex2jax.js"],
+        jax: ["input/TeX", "output/HTML-CSS"],
+        tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+        },
+        "HTML-CSS": {
+            preferredFont: "TeX",
+            availableFonts: ["TeX"],
+            styles: {
+                scale: 110,
+                ".MathJax_Display": {
+                    "font-size": "110%",
+                }
+            }
+        }
+    });
+</script>
+<script>
+function filterDataFrame(id) {
+    var input = document.getElementById("search_" + id);
+    var filter = input.value.toUpperCase();
+    var table = document.getElementById("dataframe_" + id);
+    var tr = table.getElementsByTagName("tr");
+    // Loop through all table rows, and hide those who don't match the search query
+    for (var i = 1; i < tr.length; i++) {
+        for (var j = 0; j < tr[i].cells.length; ++j) {
+            var matched = false;
+            if (tr[i].cells[j].innerHTML.toUpperCase().indexOf(filter) != -1) {
+                tr[i].style.display = "";
+                matched = true
+                break;
+            }
+            if (!matched)
+                tr[i].style.display = "none";
+        }
+    }
+}
+function sortDataFrame(id, n, dtype) {
+    var table = document.getElementById("dataframe_" + id);
+    var tb = table.tBodies[0]; // use `<tbody>` to ignore `<thead>` and `<tfoot>` rows
+    var tr = Array.prototype.slice.call(tb.rows, 0); // put rows into array
+    if (dtype === 'numeric') {
+        var fn = function(a, b) { 
+            return parseFloat(a.cells[n].textContent) <= parseFloat(b.cells[n].textContent) ? -1 : 1;
+        }
+    } else {
+        var fn = function(a, b) {
+            var c = a.cells[n].textContent.trim().localeCompare(b.cells[n].textContent.trim()); 
+            return c > 0 ? 1 : (c < 0 ? -1 : 0) }
+    }
+    var isSorted = function(array, fn) {
+        if (array.length < 2)
+            return 1;
+        var direction = fn(array[0], array[1]); 
+        for (var i = 1; i < array.length - 1; ++i) {
+            var d = fn(array[i], array[i+1]);
+            if (d == 0)
+                continue;
+            else if (direction == 0)
+                direction = d;
+            else if (direction != d)
+                return 0;
+            }
+        return direction;
+    }
+    var sorted = isSorted(tr, fn);
+    if (sorted == 1 || sorted == -1) {
+        // if sorted already, reverse it
+        for(var i = tr.length - 1; i >= 0; --i)
+            tb.appendChild(tr[i]); // append each row in order
+    } else {
+        tr = tr.sort(fn);
+        for(var i = 0; i < tr.length; ++i)
+            tb.appendChild(tr[i]); // append each row in order
+    }
+}
+</script>
+
+<script>
+$( document ).ready(function(){
+            var cfg={'threshold':3,     // depth of toc (number of levels)
+             'number_sections': false,
+             'toc_cell': false,          // useless here
+             'toc_window_display': true, // display the toc window
+             "toc_section_display": "block", // display toc contents in the window
+             'sideBar':true,       // sidebar or floating window
+             'navigate_menu':false       // navigation menu (only in liveNotebook -- do not change)
+            }
+            var st={};                  // some variables used in the script
+            st.rendering_toc_cell = false;
+            st.config_loaded = false;
+            st.extension_initialized=false;
+            st.nbcontainer_marginleft = $('#notebook-container').css('margin-left')
+            st.nbcontainer_marginright = $('#notebook-container').css('margin-right')
+            st.nbcontainer_width = $('#notebook-container').css('width')
+            st.oldTocHeight = undefined
+            st.cell_toc = undefined;
+            st.toc_index=0;
+            // fire the main function with these parameters
+            table_of_contents(cfg, st);
+            var file=analysisDict[$("h1:first").attr("id")];
+            $("#toc-level0 a").css("color","#126dce");
+            $('a[href="#'+$("h1:first").attr("id")+'"]').hide()
+            var docs=analysisArray;
+            var docs_map=analysisArrayMap;
+            var pos=analysisArray.indexOf(file);
+            for (var a=pos;a>=0;a--){
+                  $('<li><a href="'+docs[a]+'.html"><font color="#073642"><b>'+docs_map[docs[a]].replace(/_/g," ")+'</b></font></a></li>').insertBefore("#toc-level0 li:eq(0)");
+            }
+            $('a[href="'+file+'.html'+'"]').css("color","#126dce");
+            for (var a=pos+1;a<docs.length;a++){
+                  $(".toc #toc-level0").append('<li><a href="'+docs[a]+'.html"><font color="#073642"><b>'+docs_map[docs[a]].replace(/_/g," ")+'</b></font></a></li>');
+            }
+            // $("#toc-header").hide(); // comment out because it prevents search bar from displaying
+    });
+</script>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+  // mark it active
+  menuAnchor.parent().addClass('active');
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+<div class="container-fluid main-container">
+<!-- tabsets -->
+<script src="../site_libs/navigation-1.1/tabsets.js"></script>
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+
+
+<title>A Pet Project from Rui</title>
+
+<style type = "text/css">
+body {
+  font-family: "Droid Sans";
+  padding-top: 66px;
+  padding-bottom: 40px;
+}
+</style>
+</head>
+
+<body>
+<div tabindex="-1" id="notebook" class="border-box-sizing">
+<div class="container" id="notebook-container">
+
+<!-- code folding -->
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="../index.html">A Pet Project from Rui</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        
+<li>
+  <a href="../index.html">Overview</a>
+</li>
+        
+<li>
+  <a href="../analysis.html">Analysis</a>
+</li>
+        
+      </ul>
+        
+<ul class="nav navbar-nav navbar-right">
+<li>
+   <a href="https://github.com/RuiDongDR/20221005_first_docker_project"> <span class="fa fa-github"></span> </a>
+</li>
+</ul>
+        
+      </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Welcome to my research website. This project is about the prediction of Alzheimer's Disease using the data from UK Biobank.</p>
+<p>The initial set was filtered by Xinqi and large datasets can be found on Google Drive <a href="https://drive.google.com/drive/folders/1PzFhnpN-lGwz_RTdPB_tuM99JuwOCNfp?usp=sharing">(click here)</a>. From my end I will apply statistical techniques to analyze the set while Xinqi would try some ML approaches. The comparison will be made on each step.</p>
+<p>Outline of each section:</p>
+<ul>
+<li>Section 1. Preprocess data</li>
+<li>Section 2. Generation of phenotypes without matching using different inputs and methods</li>
+<li>Section 3. Introducing sample matching to generate phenotypes</li>
+<li>Section 4. Evaluation of methods (4.1. prediction; 4.2. association results)</li>
+<li>Section 5. Others</li>
+</ul>
+<p>We sometimes run the same method/input more than once based on different settings of parameters, and the most reasonable version is annotated in bold.</p>
+<h1 id="Preprocess-data">Preprocess data<a class="anchor-link" href="#Preprocess-data">&#182;</a></h1><h2 id="Family-history-data">Family history data<a class="anchor-link" href="#Family-history-data">&#182;</a></h2><p>We pre-process the family history data of UK Biobank in the following two ways. The clean data is uploaded to Google Drive named as <code>20210512_data.csv</code> <a href="https://drive.google.com/file/d/1dvUJ01Ld6Hws6XiBK6kxQaa54yu8qQJn/view?usp=sharing">(download)</a>.</p>
+<ul>
+<li><p><a href="20210130-data_import.html">20210130: data import and basic statistics</a>: uses <code>for</code> loop in R thus it is a very low-efficient way. But it is more direct and easier to understand.</p>
+<ul>
+<li><a href="20210131-split_diagnosis.html">20210131: define AD label</a></li>
+<li><a href="20210131-split_illnesses_of_relative.html">20210131: family history info</a>.</li>
+</ul>
+</li>
+<li><p><a href="20210322-MICE.html#Input_variables">20210322: Chapter: input variables</a>: Tuses <code>dplyr</code> package to extract variables and clean up the data. Please check Chapters "Package and data import" and "Input variables" in this analysis <a href="20210322-MICE.html">20210322: MICE</a> for more details.</p>
+</li>
+</ul>
+<h2 id="Cognitive-data">Cognitive data<a class="anchor-link" href="#Cognitive-data">&#182;</a></h2><p>For cognitive features, we include five aspects and transform them into normal <a href="https://drive.google.com/file/d/1aFbqprgjSEfZ7BamrMZ0GcLhfG6xr28a/view?usp=sharing">(download)</a>.</p>
+<ul>
+<li><a href="20210526_cognitive_features.html">20210526: cleaning cognitive features and transformation</a>: Output data of cognitive features is stored on Google Drive:<ul>
+<li>20210615: untransformed <a href="https://drive.google.com/file/d/1tin6ur-FEcF7dxSfp2fRYZo7zwc-SJyy/view?usp=sharing">(download)</a></li>
+<li>20210703: transformed to normal <a href="https://drive.google.com/file/d/1aFbqprgjSEfZ7BamrMZ0GcLhfG6xr28a/view?usp=sharing">(download)</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="Additional-171-features">Additional 171 features<a class="anchor-link" href="#Additional-171-features">&#182;</a></h2><p>Those 171 features are selected by Xinqi and we calculate their Pearson correlations with AD label in the following analysis. The data is already included in <code>20210512_data.csv</code> <a href="https://drive.google.com/file/d/1dvUJ01Ld6Hws6XiBK6kxQaa54yu8qQJn/view?usp=sharing">(download)</a>.</p>
+<ul>
+<li><a href="20210422-AdditionalVariablesAmong170.html">20210422: Pearson correlation of 171 features</a></li>
+</ul>
+<h2 id="Other-phenotypes">Other phenotypes<a class="anchor-link" href="#Other-phenotypes">&#182;</a></h2><p>We also study other phenotypes in this project, when we develop the sample matching strategy. The problem with AD is that the patients are usually too old to be included in UK Biobank, leading to the fact that we only have ~1220 AD cases among 501,492 individulas. Thus we select other diseases and perform the same method.</p>
+<h3 id="Age-related-hearing-impairment">Age-related hearing impairment<a class="anchor-link" href="#Age-related-hearing-impairment">&#182;</a></h3><p>Here we select AGHI because Suzanne and Diana have done a lot about the hearing impairment and we can start from their pipeline.</p>
+<ul>
+<li><a href="20220601_hearing_impairment_data.html">20220601: hearing impairment data</a></li>
+</ul>
+<h1 id="Generation-of-phenotypes-(no-matching-at-all)">Generation of phenotypes (no matching at all)<a class="anchor-link" href="#Generation-of-phenotypes-(no-matching-at-all)">&#182;</a></h1><p>We apply two methods (<code>MICE</code> and <code>PU learning</code>) to generate the phenotypes based on different inputs (<code>FH</code>, <code>FH+COG</code>, and <code>COG</code>). To compare with the published results LT-FH, we also run <code>LT-FH</code> on our own.</p>
+<h2 id="Input:-only-family-history">Input: only family history<a class="anchor-link" href="#Input:-only-family-history">&#182;</a></h2><p>Family history includes three variables: <code>AD_father</code>, <code>AD_mother</code>, and <code>AD_siblings</code>.</p>
+<ul>
+<li><a href="20220408_LT-FH_and_matching_kNN.html#Whole_set"><strong>20220408: LT-FH on UK Biobank</strong></a>: apply <code>LT-FH</code> on the UK Biobank dataset without defining any controls (prevalence = 5% for both parents and children).<ul>
+<li><a href="20210518_Liability_UKBiobankData_train_test.html">20210518: LT-FH on UK Biobank</a>: the prevalence is set as 0.22% for children, 5.18% for parents according to Zihan's code.</li>
+<li><a href="20210413_Liability_Testing1.html">20210413: LT-FH on a test set</a></li>
+<li><a href="20210414_Liability_Toy_Data.html">20210414: LT-FH on a toy set</a></li>
+<li><a href="20210416_Liability_UKBiobankData.html">20210416: LT-FH on UK Biobank with 81200 controls</a></li>
+</ul>
+</li>
+<li><a href="20210521_Logistic_regression_train_test.html">20210521: Logistic regression on UK Biobank</a>: run <code>logistic regression</code> on the UK Biobank dataset (with train and test).<ul>
+<li><a href="20210321-logistic_regression_ADlabel.html">20210321: initial try on logistic regression</a></li>
+<li><a href="20210326-Data_Import_and_Logistic_Regression_All_Individuals.html">20210326: logistic regression</a> (without train and test)</li>
+<li><a href="20210402-Data_Import_Logistic_Regression_Case_Control.html">20210402: logistic regression with 81200 controls</a></li>
+</ul>
+</li>
+<li><a href="20210521_MICE_train_test.html"><strong>20210521: MICE on UK Biobank</strong></a>: apply MICE on the UK Biobank dataset (with train and test).<ul>
+<li><a href="20210201-mice_input.html">20210201: initial try on MICE</a></li>
+<li><a href="20210322-MICE.html">20210322: MICE on Uk without train and test</a></li>
+</ul>
+</li>
+<li>PU approaches on UK Biobank dataset<ul>
+<li><a href="./ipynb/notebook/052221-HeuristicMethodTry_InductivePUlearning_XGBoost.html">20210522: PU (from Xinqi)</a></li>
+<li><a href="./ipynb/notebook/052421-HeuristicMethodTry_InductivePUlearning_LogisticRegression.html">20210524: PU + logistic results (from Xinqi)</a></li>
+<li><a href="20211007_PU_logistic_FH.html">20211007: PU + logistic results (prevalence = 50%)</a></li>
+<li><a href="./ipynb/notebook/052421-HeuristicMethodTry_InductivePUlearning_XGBoost_LiabilityScore.html">20210524: PU inductive + XGBoost + LT-FH + FH (from Xinqi)</a></li>
+<li><a href="20211001_PUoob_FH_only.html">20211001: PU out-of-bag + XGBoost</a></li>
+<li><a href="20210930_PU_only_FH.html">20210930: PU out-of-bag + XGBoost with train and test (prevalence = 50%)</a></li>
+<li><a href="20220118_PUoob_FH_without_matching_prevalence_5_percent.html"><strong>20220118: PU out-of-bag + XGBoost without train and test (prevalence = 5%)</strong></a></li>
+</ul>
+</li>
+<li><a href="20210525_Comparison_of_six_approaches_based_on_family_history_information.html">20210525: A comparison of methods (precision curves)</a>: evaluate different methods by true positive versus positive curves on a test set of 100 AD cases + 2000 noncases.</li>
+</ul>
+<h2 id="Input:-family-history-+-cognitive-features">Input: family history + cognitive features<a class="anchor-link" href="#Input:-family-history-+-cognitive-features">&#182;</a></h2><h3 id="First-try:-FH-+-untransformed-cognitive-features">First try: FH + untransformed cognitive features<a class="anchor-link" href="#First-try:-FH-+-untransformed-cognitive-features">&#182;</a></h3><p>At first we didn't realize the necessity of transformation of cognitive data, thus we directly applied <code>logistic regression</code>, <code>MICE</code> and <code>PU</code> on the family history and untransformed cognitive data in the following analysis. The results are also compared in precision curves.</p>
+<ul>
+<li><a href="20210614_logistic_regression_familyhistory_cognitivefeatures.html">20210614: logistic regression</a></li>
+<li><a href="20210615_MICE_family_history_and_cognitive_features.html">20210615: MICE</a></li>
+<li><a href="./ipynb/notebook/061821-PUlearning_XGBoost-CognitiveFeatures_1.html">20210618: PU (from Xinqi)</a></li>
+<li><a href="20210624_comparison_of_approaches_based_on_family_history_and_cognitive_features.html">20210624: A comparison of methods (precision curves) of methods using FH and untransformed cognitive features</a></li>
+</ul>
+<h3 id="Revised:-FH-+-transformed-cognitive-features">Revised: FH + transformed cognitive features<a class="anchor-link" href="#Revised:-FH-+-transformed-cognitive-features">&#182;</a></h3><p>After we transformed the data to normal, we reapplied the methods on FH and cognitive features followed by a comparison in precision curves. We also added another comparison to the simplest model too (no fancy models, just impute all missing entries using mean value).</p>
+<ul>
+<li><a href="20210702_logistic_regression_family_history_cognitive_features_transformed.html">20210702: logistic regression</a></li>
+<li><a href="20210702_MICE_family_history_and_cognitive_features_transformed.html"><strong>20210702: MICE</strong></a><ul>
+<li><a href="20210717_distribution_of_age_MICE_score.html">20210717: different age distributions for MICE-FH+COG levels</a></li>
+</ul>
+</li>
+<li><a href="./ipynb/notebook/080121-PUlearning_XGBoost-TransformedCognitiveFeatures_2_inductive.html">20210801: PU inductive (from Xinqi)</a></li>
+<li><a href="./ipynb/notebook/20210801_PUlearning_XGBoost-TransformedCognitiveFeatures_2_oob.html">20210801: PU oob (from Xinqi)</a>: results stored as <code>20210722_ADpredict_score_4s.csv</code> <a href="https://drive.google.com/file/d/1eUYaDm9pPzpqCNxtcnJgkFDI-FTEq7rY/view?usp=sharing">(download)</a>.</li>
+<li><a href="20211025_PU_oob_FH_COG.html">20211025: PU oob (prevalence = 50%)</a></li>
+<li><a href="20220118_PUoob_FH_COG_without_matching_prevalence_5_percent.html"><strong>20220118: PU oob (prevalence = 5%)</strong></a></li>
+<li><a href="20210721_comparison_of_approaches_family_history_cognitive_features_transformed.html">20210721: A comparison of methods (precision curves)</a></li>
+<li><a href="20210722_model0_mean_imputation_logistic_regression.html">20210722: Another comparison with the mean imputation (precision curves)</a> YES!</li>
+</ul>
+<h2 id="Input:-family-history-+-cognitive-features-+-171-features">Input: family history + cognitive features + 171 features<a class="anchor-link" href="#Input:-family-history-+-cognitive-features-+-171-features">&#182;</a></h2><p>We apply PU on the all variables (FH + COG + 171 features) to see if the additional features help. We cannot run MICE here because it would take too long.</p>
+<ul>
+<li><a href="./ipynb/notebook/072821-PULearning_XGBoost-CognitiveFeatures+171Xinqi.html">20210728: PU</a></li>
+<li><a href="20210805_PUXGBoost_171_features.html">20210805: A comparison of methods (precision curves)</a></li>
+</ul>
+<h2 id="Input:-only-cognitive-features">Input: only cognitive features<a class="anchor-link" href="#Input:-only-cognitive-features">&#182;</a></h2><p>During our analysis, we gradually doubt if cognitive features really help improve the results. Thus we also applied methods based on input of only cognitive features.</p>
+<ul>
+<li><a href="20211001_MICE_COG_only.html"><strong>20211001: MICE on only COG</strong></a></li>
+<li><a href="20220118_PUoob_COG_without_matching_prevalence_5_percent.html"><strong>20220118: PU on only COG (prevalence = 5%)</strong></a><ul>
+<li><a href="20211001_PUoob_COG_only.html">20211001: PU on only COG (prevalence = 50%)</a></li>
+</ul>
+</li>
+</ul>
+<h1 id="Sample-matching">Sample matching<a class="anchor-link" href="#Sample-matching">&#182;</a></h1><h2 id="Strategy-A:-A-matched-set-and-its-generalization">Strategy A: A matched set and its generalization<a class="anchor-link" href="#Strategy-A:-A-matched-set-and-its-generalization">&#182;</a></h2><p>To eliminate the effect of age and sex on the phenotype, we design as follows:</p>
+<ol>
+<li><p>Select a subset from all 501492 individuals. The subset includes all the AD cases, and for each case, we matched a fixed number (e.g., 100 or 75) of noncases with exactly same age and sex simultaneously to the case.</p>
+<ul>
+<li><a href="20210727_match_on_age_and_sex.html">20210727: exact match on age and sex</a></li>
+</ul>
+</li>
+<li><p>Apply MICE/PU/LTFH methods on this subset with different inputs, thus this score will be free from the effect of age and sex because the input dataset is balanced.</p>
+</li>
+</ol>
+<ul>
+<li>Input: only FH<ul>
+<li><a href="20211111_kNN_on_MICE_FH_scores.html#MICE_scores_for_matched_individuals"><strong>20211111: MICE on only FH (second section)</strong></a></li>
+<li><a href="20220118_PUoob_FH_on_matched_individuals_prevalence_5_percent.html"><strong>20220118: PU on only FH (prevalence = 5%)</strong></a><ul>
+<li><a href="20211108_PUoob_FH_matched_only.html">20211108: PU on only FH (prevalence = 50%)</a></li>
+</ul>
+</li>
+<li><a href="20220408_LT-FH_and_matching_kNN.html#Run_LT-FH_on_different_input">20220408: LT-FH</a></li>
+</ul>
+</li>
+<li>Input: FH+COG<ul>
+<li><a href="20210801_MICE_matched_set_2_FH_cog_transformed.html"><strong>20210801: MICE on FH + COG</strong></a></li>
+<li><a href="20220118_PUoob_FH_COG_on_matched_individuals_prevalence_5_percent.html"><strong>20220118: PU on FH + COG</strong></a></li>
+</ul>
+</li>
+<li>Input: COG<ul>
+<li><a href="20220118_PUoob_FH_on_matched_individuals_prevalence_5_percent.html"><strong>20220118: PU on only COG</strong></a></li>
+</ul>
+</li>
+</ul>
+<ol>
+<li>For each individual not in the subset (noncases), we find his/her closest neighbors in the subset based on different assignments (<code>1.FH</code>/<code>2.FH+COG</code>/<code>3.FH+AD_self</code>/<code>4.FH+COG+AD_self</code>), and assign the average value of the neighbors' scores to him. Thus everyone has a phenotype score.</li>
+</ol>
+<ul>
+<li><p>Input: only FH</p>
+<ul>
+<li><a href="20211111_kNN_on_MICE_FH_scores.html"><strong>20211111: generalization after MICE (FH) (last section)</strong></a> (assignment 1 and 2)</li>
+<li><a href="20211110_kNN_on_PU_oob_FH_scores.html"><strong>20211110: generalization after PU (FH) (prevalence = 5%)</strong></a> (assignment 1 and 2)</li>
+<li><a href="20220408_LT-FH_and_matching_kNN.html#k-NN_to_unmatched_individuals"><strong>20220408: LT-FH</strong></a>  (assignment 1,2,3,4)</li>
+</ul>
+</li>
+<li><p>Input: FH+COG</p>
+<ul>
+<li><a href="20211002-exact_match_and_kNN_regression.html">20211002: generalization after MICE (FH+COG)</a> (assignment 1 and 2)</li>
+</ul>
+</li>
+</ul>
+<h2 id="Matching-on-ADlabels">Matching on ADlabels<a class="anchor-link" href="#Matching-on-ADlabels">&#182;</a></h2><p>To analyze if sample matching improves the association results, instead of using the phenotypes generated by MICE/PU/LTFH, we first apply sample matching on the simplest phenotypes, i.e., ADlabel, to see if there is any improvement.</p>
+<ul>
+<li><p><a href="20220429_sample_matching_on_ADlabel.html">20220429: sample matching on ADlabels</a>: generate the phenotypes (ADlabels) with the following matching</p>
+<ul>
+<li>phenotype 0 (full): no sample matching, all individuals (sample size: 501492)</li>
+<li>phenotype 0: no sample matching, all individuals aged between 50-70 (sample size: 383859)</li>
+<li>phenotype 1: random sample matching, 1207 ADcases + 1207*75 randomly selected noncases (sample size: 91732)</li>
+<li>phenotype 2: exact match on age and sex, 1207 ADcases + 1207*75 matched noncases (sample size: 91732)</li>
+<li>phenotype 3: exact match on age and sex with no family history controls, 1207 ADcases + 1207*36 matched noncases (sample size: 44659)</li>
+</ul>
+</li>
+<li><p><a href="20220520_LT-FH_simple_matching.html">20220520: sample matching on LTFH</a>: generate the phenotypes (LTFH) with the same matching above.</p>
+</li>
+</ul>
+<h3 id="More-cases">More cases<a class="anchor-link" href="#More-cases">&#182;</a></h3><p>Because we only get ~1200 AD cases from UK Biobank, Gao proposes the strategy to treat some noncases as cases, thus we can get more cases. However, even in this way we still get very limited new cases.</p>
+<ul>
+<li><a href="20220516_matching_for_more_cases.html">20220516: matching for more cases</a></li>
+</ul>
+<h3 id="Conditional-logistic-regression">Conditional logistic regression<a class="anchor-link" href="#Conditional-logistic-regression">&#182;</a></h3><p>We found two packages <code>CGEN</code> and <code>survival</code> can perform conditional logistic regression for our matched dataset.</p>
+<ul>
+<li><a href="20220530_CGEN_package.html">20220530: first try on CGEN package</a>: run <code>snp.matched</code> and <code>clogit</code> and compare results (same) on a simulated ovarian cancer set according to the manual book of package <code>CGEN</code>.</li>
+</ul>
+<h1 id="Evaluation">Evaluation<a class="anchor-link" href="#Evaluation">&#182;</a></h1><p>The methods are evaluated in two ways, one is prediction and the other is association study.</p>
+<h2 id="Precision-curve-comparison">Precision curve comparison<a class="anchor-link" href="#Precision-curve-comparison">&#182;</a></h2><p>The prediction is performed on a test set of 100 AD cases + 2000 noncases <a href="https://drive.google.com/drive/u/0/folders/1krX9Yzqf11fpQYVpWQJhx2MLvDsse_Ke">(download)</a>, based on different models that we train with different input.</p>
+<ul>
+<li><code>P</code>: A positive (P) sample refers to an individual (from test set) with a predicted score higher than (or equal to) the threshold.</li>
+<li>threshold: we select different quantiles (0.25,, 0.75, 0.95, ...) as the threshold for prediction.</li>
+<li><code>N</code>: A negative (N) sample refers to an individual (from test set) with a predicted score lower than the threshold.</li>
+<li><code>TP</code>: A true positive (TP) sample refers to a case (from test set) with a predicted score higher than (or equal to) the threshold.</li>
+<li><code>TN</code>: A true negative (TN) sample refers to a noncase (from test set) with a predicted score lower than the threshold.</li>
+<li><code>FP</code>: A false positive (FP) sample refers to a noncase (from test set) with a predicted score higher than (or equal to) the threshold.</li>
+<li><code>FN</code>: A false negative (FN) sample refers to a case (from test set) with a predicted score lower than the threshold.</li>
+</ul>
+<p>Each evaluation is done for the same input of data/method, and already mentioned in the sections above. We list them here again to make it easier to find.</p>
+<ul>
+<li><a href="20210525_Comparison_of_six_approaches_based_on_family_history_information.html">20210525: A comparison of methods (precision curves)</a>: input as FH, and compare the following methods<ul>
+<li>logistic regression on FH</li>
+<li>LT-FH (original)</li>
+<li>MICE on FH</li>
+<li>PU + logistic regression on FH</li>
+<li>PU + XGBoost on FH</li>
+<li>PU + XGBoost + logistic regression on FH</li>
+<li>random imputation</li>
+</ul>
+</li>
+<li><a href="20210721_comparison_of_approaches_family_history_cognitive_features_transformed.html">20210721: A comparison of methods (precision curves)</a>: input as FH + COG (transformed/untransformed), and compare the following methods<ul>
+<li>LT-FH (original) on FH + COG</li>
+<li>MICE on FH + COG</li>
+<li>PU + XGBoost on FH + COG</li>
+<li>PU + XGBoost + logistic regression on FH + COG</li>
+<li>random imputation on FH + COG</li>
+</ul>
+</li>
+<li><a href="20210805_PUXGBoost_171_features.html">20210805: A comparison of methods (precision curves)</a>: compare the following methods<ul>
+<li>LT-FH (original) on FH + COG</li>
+<li>MICE on FH + COG</li>
+<li>PU on FH + COG</li>
+<li>PU on FH + COG + 170 features</li>
+</ul>
+</li>
+<li><a href="20210818_comparison_methods_FH_with_or_without_cog_and_171_features.html">20210818: A comparison of methods (precision curves)</a>: compare the following methods<ul>
+<li>LT-FH (original)</li>
+<li>MICE on FH</li>
+<li>PU on FH</li>
+<li>MICE on FH + COG</li>
+<li>PU on FH + COG</li>
+<li>PU on FH + COG + 170 features</li>
+</ul>
+</li>
+</ul>
+<h2 id="Genome-wide-association-study">Genome-wide association study<a class="anchor-link" href="#Genome-wide-association-study">&#182;</a></h2><h3 id="Generation-of-phenotypes">Generation of phenotypes<a class="anchor-link" href="#Generation-of-phenotypes">&#182;</a></h3><ul>
+<li><a href="20210803_generate_covariate_and_phenotype_file_with_normalization.html">20210803: generate the phenotype scores based on FH+COG</a>: generate the following input for association study. Here "transformation" refers to normalization and winsorization.<ul>
+<li>MICE on FH + COG (with and without transformation)</li>
+<li>PU inductive on FH + COG (with and without transformation)</li>
+<li>PU oob on FH + COG (with and without transformation)</li>
+</ul>
+</li>
+<li><a href="20211004_generate_covariate_and_phenotype_file_with_normalization_2.html">20211004: generate the phenotype scores based on FH/COG</a>: generate the following input for association study:<ul>
+<li><code>20211004_covariate_phenotype_MICE_or_PUoob_FH_or_COG.csv</code><ul>
+<li>MICE on FH (with and without transformation)</li>
+<li>MICE on COG (with and without transformation)</li>
+<li>PU on FH (with and without transformation)</li>
+<li>PU on COG (with and without transformation)</li>
+</ul>
+</li>
+<li><code>20211004_covariate_phenotype_MICE_kNN_FH_COG.csv</code><ul>
+<li>MICE on FH COG, assignment 2 (with and without transformation)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="20220115_generate_phenotype_3.html">20220115: generate the phenotype scores with strategy A</a>: generate the following input for association study, all with transformation:<ul>
+<li>PU on FH, no matching</li>
+<li>PU on FH, assignment 1</li>
+<li>PU on FH, assignment 2</li>
+<li>MICE on FH, assignment 1</li>
+<li>MICE on FH, assignment 2</li>
+<li>PU on FH + COG, assignment 2</li>
+</ul>
+</li>
+</ul>
+<h3 id="Manhattan-plots-and-quality-control">Manhattan plots and quality control<a class="anchor-link" href="#Manhattan-plots-and-quality-control">&#182;</a></h3><p>These files draw the Manhattan plots of some association results and conduct quality control analysis.</p>
+<ul>
+<li><a href="20210811_SNPs_in_2019_NG_LT_FH.html">20210811: SNPs of LT-FH scores</a></li>
+<li><a href="20210812_SNPs_in_PUXGBoost_oob_normalize_winsorized.html">20210812: SNPs of PU scores</a></li>
+<li><a href="20210812_SNPs_MICE_normalized_winsorized.html">20210812: SNPs of MICE scores</a></li>
+<li><a href="20210905_magma_result.html">20210905: magma results</a>: compare the output of <code>magma</code> with and without normalization and normalization</li>
+</ul>
+<h3 id="Evaluation-based-on-Kunkle-SNPs">Evaluation based on Kunkle SNPs<a class="anchor-link" href="#Evaluation-based-on-Kunkle-SNPs">&#182;</a></h3><p>The gold standard is considered to be the SNPs found in <a href="https://www.nature.com/articles/s41588-019-0358-2">Kunkle et al. 2019</a>.</p>
+<h4 id="Extract-the-SNPs-from-the-association-results">Extract the SNPs from the association results<a class="anchor-link" href="#Extract-the-SNPs-from-the-association-results">&#182;</a></h4><ul>
+<li><a href="20211009_comparison_with_Kunkle.html">20211009: extract SNPs using R</a>: not recommended.</li>
+<li><code>extract_Kunkle.sh</code> <a href="https://drive.google.com/file/d/1NvvORQRfznZn0AuB3Q2JTuYZh0LiWril/view?usp=sharing">(download)</a>: This is a shell program with input as the <code>.snp_stats</code> and output as only the SNPs in Kunkle paper. The output file is named with additional suffix as <code>_Kunkle.csv</code>.</li>
+</ul>
+<h4 id="Evaluation-results-on-Kunkle-SNPs">Evaluation results on Kunkle SNPs<a class="anchor-link" href="#Evaluation-results-on-Kunkle-SNPs">&#182;</a></h4><h5 id="Strategy-A">Strategy A<a class="anchor-link" href="#Strategy-A">&#182;</a></h5><ul>
+<li><p><a href="20220327_Kunkle_comparison.html"><strong>20220327: MICE, PU on different inputs</strong></a>: This analysis compares MICE and PU with the original LT-FH and try to answer the following questions:</p>
+<ol>
+<li><p><strong>Does the Strategy A work (assignment 1 and 2)?</strong></p>
+<p><em>Answer</em>:</p>
+
+<pre><code>       - When the input for generating score is only FH, matching works better than no-matching.
+       - When the input for generating score is FH+COG, matching is the same as no-matching.</code></pre>
+</li>
+<li><p><strong>Do cognitive features help in the association study?</strong></p>
+<p><em>Answer</em>: Cognitive features don’t really help no matter we use MICE or PU learning to generate scores.</p>
+</li>
+<li><p><strong>Which method is better? MICE, PU or LT-FH?</strong></p>
+<p><em>Answer</em>: Generally, MICE performs better on PU on the known 32 SNPs, no matter we use FH or FH+COG as input. However, the results are still not as good as LT-FH.</p>
+</li>
+</ol>
+</li>
+<li><p><a href="20220420_LTFH_matching_GWAS_Kunkle.html">20220420: association results of applying strategy A on LT-FH scores</a>: including phenotypes generated by original LTFH and LTFH with four assignments in <a href="20220408_LT-FH_and_matching_kNN.html">20220408: LT-FH</a>.</p>
+</li>
+</ul>
+<h5 id="Sample-matching-on-ADlabels">Sample matching on ADlabels<a class="anchor-link" href="#Sample-matching-on-ADlabels">&#182;</a></h5><ul>
+<li><a href="20220505_sample_matching_on_ADlabel_association_results.html">20220505: association results of applying sample matching on ADlabels</a>: including phenotypes generated in <a href="20220429_sample_matching_on_ADlabel.html">20220429: sample matching on ADlabels</a>.</li>
+</ul>
+<h1 id="Others">Others<a class="anchor-link" href="#Others">&#182;</a></h1><h2 id="High-baseline-in-PU-XGBoost">High baseline in PU XGBoost<a class="anchor-link" href="#High-baseline-in-PU-XGBoost">&#182;</a></h2><p>In the comparison of mean scores in <a href="20210818_comparison_methods_FH_with_or_without_cog_and_171_features.html">20210818: A comparison of methods (precision curves)</a>, we found that PU+XGBoost gets an abnormal high baseline of around 0.4, when using both family history and cognitive features as input. To understand the reason that causes this, we run PU+XGBoost and PU+logistic on different inputs.</p>
+<ul>
+<li><a href="20211006_baseline_of_score.html">20211006: baseline comparison analysis</a></li>
+</ul>
+<p>To figure out if it is the high missing rate in the 10 cognitive features themselves cause the high baseline, we select 10 variables with low missing rate in <a href="20211006_baseline_of_score.html">20211006: baseline analysis</a>.</p>
+<ul>
+<li><p>Input: FH + 10 variables</p>
+<ul>
+<li><a href="20211012_PUXGboost_FH_10vars.html">20211012: PU + XGboost</a></li>
+<li><a href="20211020_logistic_regression_FH_10var.html">20211020: logistic regression</a></li>
+<li><a href="20211020_PU_logistic_FH_10var.html">20211020: PU + logistic regression</a></li>
+</ul>
+</li>
+<li><p>Testing different ratios</p>
+<ul>
+<li><a href="20211026_PU_XGB_FH_COG_1000+1000.html">20211026: PU-FH+COG ratio=1:1</a></li>
+<li><a href="20211026_PU_XGB_FH_COG_ratio_1over10.html">20211026: PU-FH+COG ratio=1:10</a></li>
+<li><a href="20211026_PU_XGB_FH_COG.html">20211026: PU-FH+COG on test set</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="New-features-(from-Ling)">New features (from Ling)<a class="anchor-link" href="#New-features-(from-Ling)">&#182;</a></h2><ul>
+<li><a href="20211105_notes_ling.html">20211105: notes from Ling</a></li>
+<li><a href="20211105_summary_ling.html">20211105: summary from Ling</a></li>
+</ul>
+<h2 id="Run-PU-in-Jupyter-notebook">Run PU in Jupyter notebook<a class="anchor-link" href="#Run-PU-in-Jupyter-notebook">&#182;</a></h2><ul>
+<li><a href="20210715_Rui_PULearning_XGBoost_template.html">20210715: begin with PU learning in jupyter</a></li>
+</ul>
+<h2 id="Extension-of-LT-FH">Extension of LT-FH<a class="anchor-link" href="#Extension-of-LT-FH">&#182;</a></h2><p>We design a method to generate the liability scores for both children and their parents.</p>
+<ul>
+<li><a href="20211125_LTFH_for_parents.html">20211125: LT-FH for parents</a></li>
+</ul>
+
+</div>
+</div>
+</div>
+<hr>
+&copy Rui Dong, THU
+<p><small>Exported from <a href="https://github.com/RuiDongDR/20221005_first_docker_project/blob/b5094ecdb2f5aa3f2c295812a55679bcc7a493e5/analysis/index.Rmd"><code>analysis/index.Rmd</code></a> committed by RuiDongDR on Fri Oct 7 10:35:09 2022 <a href="https://github.com/RuiDongDR/20221005_first_docker_project/commit/b5094ecdb2f5aa3f2c295812a55679bcc7a493e5">revision 1, b5094ec</a> <a href="https://stephenslab.github.io/ipynb-website/notes.html#Note-about-commit-ids"><span class="fa fa-question-circle"></span></a></small></p>
+</div>
+</div>
+</body>
+</html>

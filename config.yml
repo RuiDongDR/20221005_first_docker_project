@@ -1,10 +1,10 @@
-# name: 'A Pet Project from Rui'
-# repo: 'http://github.com/vatlab/jnbinder'
-# footer: "&copy 2016-2017 Gao Wang at Stephens Lab, University of Chicago"
-# include_dir: ['analysis']
+name: 'A Pet Project from Rui'
+repo: 'https://github.com/RuiDongDR/20221005_first_docker_project'
+footer: "&copy Rui Dong, THU"
+include_dir: ['./analysis']
 # exclude_file: []
 # hide_navbar: []
-# homepage: "/Users/serenadong/files_Rui/20221005_first_docker_project/analysis/Overview.ipynb"
+homepage: "/Users/serenadong/files_Rui/20221005_first_docker_project/analysis/Overview.ipynb"
 # skip_homepage: False
 # add_commit_info: False
 # disqus: NULL
