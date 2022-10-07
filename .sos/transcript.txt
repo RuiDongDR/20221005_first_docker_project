@@ -1,0 +1,14 @@
+/bin/bash -ev SCRIPT:
+    mkdir -p docs
+    yes | cp -rf jnbinder-master/docs/* docs/
+    cp jnbinder-master/config.yml config.yml
+    rm -rf jnbinder-master*
+    
+    
+/bin/bash -ev SCRIPT:
+    mkdir -p docs
+    yes | cp -rf jnbinder-master/docs/* docs/
+    cp jnbinder-master/config.yml config.default.yml
+    rm -rf jnbinder-master*
+    
+    
